@@ -9,41 +9,40 @@
 // thread::spawn will open a thread
 // then we will just need to do some gymanstics with Arc mutexs around x and y
 
-use std::{
-    collections::HashMap,
-    sync::{
-        Arc, Mutex,
-        mpsc::{self, Receiver, Sender},
-    },
-    thread,
+use std::{collections::HashMap, sync::Arc};
+
+use tokio::sync::{
+    Mutex,
+    mpsc::{self, Receiver, Sender},
 };
 
-const N: u8 = 4;
+const N: u32 = 100;
 
-fn main() {
-    let x: Arc<Mutex<HashMap<u8, u8>>> = Arc::new(Mutex::new(HashMap::new()));
-    let y: Arc<Mutex<HashMap<u8, u8>>> = Arc::new(Mutex::new(HashMap::new()));
+#[tokio::main]
+async fn main() {
+    let x: Arc<Mutex<HashMap<u32, u32>>> = Arc::new(Mutex::new(HashMap::new()));
+    let y: Arc<Mutex<HashMap<u32, u32>>> = Arc::new(Mutex::new(HashMap::new()));
 
-    let (tx, rx): (Sender<u8>, Receiver<u8>) = mpsc::channel();
+    let (tx, mut rx): (Sender<u32>, Receiver<u32>) = mpsc::channel(1);
 
     for i in 0..N {
         let x_clone = Arc::clone(&x);
         let y_clone = Arc::clone(&y);
         let thread_tx = tx.clone();
-        thread::spawn(move || {
+        tokio::spawn(async move {
             let prev = (i + N - 1) % N;
-            let mut local_x = x_clone.lock().unwrap();
+            let mut local_x = x_clone.lock().await;
             local_x.insert(i, 1);
-            let mut local_y = y_clone.lock().unwrap();
+            let mut local_y = y_clone.lock().await;
             let prev_x = local_x.get(&prev).cloned().unwrap_or(0);
             local_y.insert(i, prev_x);
-            thread_tx.send(prev_x).unwrap();
+            thread_tx.send(prev_x).await.unwrap();
         });
     }
 
     drop(tx);
 
-    for msg in rx {
+    while let Some(msg) = rx.recv().await {
         println!("{msg:?}");
     }
 

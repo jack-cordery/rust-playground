@@ -9,12 +9,9 @@
 // thread::spawn will open a thread
 // then we will just need to do some gymanstics with Arc mutexs around x and y
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, sync::Mutex};
 
-use tokio::sync::{
-    Mutex,
-    mpsc::{self, Receiver, Sender},
-};
+use tokio::sync::mpsc::{self, Receiver, Sender};
 
 const N: u32 = 100;
 
@@ -31,12 +28,18 @@ async fn main() {
         let thread_tx = tx.clone();
         tokio::spawn(async move {
             let prev = (i + N - 1) % N;
-            let mut local_x = x_clone.lock().await;
-            local_x.insert(i, 1);
-            let mut local_y = y_clone.lock().await;
-            let prev_x = local_x.get(&prev).cloned().unwrap_or(0);
-            local_y.insert(i, prev_x);
-            thread_tx.send(prev_x).await.unwrap();
+            let x: u32;
+            {
+                // you can use sync::mutex if youre not sending
+                // something in the await
+                let mut local_x = x_clone.lock().unwrap();
+                local_x.insert(i, 1);
+                let mut local_y = y_clone.lock().unwrap();
+                let prev_x = local_x.get(&prev).cloned().unwrap_or(0);
+                x = prev_x;
+                local_y.insert(i, prev_x);
+            }
+            thread_tx.send(x).await.unwrap();
         });
     }
 

@@ -1,6 +1,5 @@
 use ahash::AHashMap;
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use rand::Rng;
+use criterion::{Criterion, criterion_group, criterion_main};
 use std::collections::HashMap;
 use std::hint::black_box;
 

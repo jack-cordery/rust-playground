@@ -16,4 +16,10 @@ fn main() {
 
     println!("x:{x:?}");
     println!("y:{y:?}");
+
+    let x = 100;
+
+    let y = &&100;
+
+    println!("y:{y}, y:{y:p} y:{:p} y:{}", *y, **y);
 }

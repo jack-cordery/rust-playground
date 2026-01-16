@@ -12,7 +12,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 /// - on retrieval we will do so in reverse
 /// - we will use std::hash (or whatever it is)
 /// - we will seek O(N) retrieval and insertion and mem
-/// TODO: - deal with collisions by implementing open addressing
+///   TODO: - deal with collisions by implementing open addressing
 #[derive(Debug, Clone)]
 struct KeyVal {
     key: String,

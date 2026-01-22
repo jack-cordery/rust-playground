@@ -692,6 +692,10 @@ name = "sizes"
 version = "0.1.0"
 
 [[package]]
+name = "slices"
+version = "0.1.0"
+
+[[package]]
 name = "slow-hash"
 version = "0.1.0"
 

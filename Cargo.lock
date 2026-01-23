@@ -168,6 +168,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "concurrent-data-structures"
+version = "0.1.0"
+
+[[package]]
 name = "criterion"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

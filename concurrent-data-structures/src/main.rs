@@ -23,37 +23,28 @@ impl Counter {
     }
 }
 
-fn main() {
+pub enum CounterType {
+    Precise,
+    Approximate,
+}
+
+fn work(increments: usize, n_threads: usize, c: CounterType) {
     let now = Instant::now();
 
-    let counter = Arc::new(Counter::new());
-    let mut handles = vec![];
-    let thread_counter = Arc::clone(&counter);
-    let join_handle = thread::spawn(move || {
-        for _ in 0..5_000_000 {
-            thread_counter.increment();
-        }
-        //lock release on drop
-    });
-    handles.push(join_handle);
-    //Wait
-    for handle in handles {
-        handle.join().unwrap();
-    }
-    let final_count = counter.count.lock().unwrap();
-    println!(
-        "Counter for one thread is {} and it took {}",
-        final_count,
-        now.elapsed().as_millis()
-    );
+    let counter = match c {
+        CounterType::Precise => Counter::new(),
+        CounterType::Approximate => todo!(),
+    };
 
-    let now = Instant::now();
-    let counter = Arc::new(Counter::new());
+    let counter = Arc::new(counter);
     let mut handles = vec![];
-    for _ in 0..5 {
+    let n_increments = increments / n_threads;
+    assert_eq!(0, increments % n_threads);
+    for _ in 0..n_threads {
+        let thread_n = n_increments;
         let thread_counter = Arc::clone(&counter);
         let join_handle = thread::spawn(move || {
-            for _ in 0..1_000_000 {
+            for _ in 0..thread_n {
                 thread_counter.increment();
             }
             //lock release on drop
@@ -66,8 +57,13 @@ fn main() {
     }
     let final_count = counter.count.lock().unwrap();
     println!(
-        "Counter for 5 threads is {} and it took {}",
+        "Counter for one thread is {} and it took {}",
         final_count,
         now.elapsed().as_millis()
     );
+}
+
+fn main() {
+    work(5_000_000, 1, CounterType::Precise);
+    work(5_000_000, 5, CounterType::Precise);
 }
